@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  product-db:
+    image: postgres:16
+    container_name: product-db
+    restart: always
+    environment:
+      POSTGRES_DB: product_db
+      POSTGRES_USER: product_user     # Specification එකේ තියෙන විදිහට
+      POSTGRES_PASSWORD: product_pass # Specification එකේ තියෙන විදිහට (ඔයාට කැමති රහස්පදයක් දිය හැක)
+    ports:
+      - "5433:5432"                   # Local port 5433 එක Postgres port 5432 ට map කර ඇත
+    volumes:
+      - product_data:/var/lib/postgresql/data
+
+volumes:
+  product_data:
