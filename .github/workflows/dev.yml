@@ -1,15 +1,56 @@
-name: Push Automated Changes
+name: Product Service CI
 
 on:
   push:
     branches:
       - main # Triggers when you push to main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  commit-and-push:
+  build-and-test:
     runs-on: ubuntu-latest
+
+    # Matches docker-compose.yml's product-db service so the Spring Boot
+    # datasource config (localhost:5433/product_db) works unchanged in CI.
+    services:
+      product-db:
+        image: postgres:16
+        env:
+          POSTGRES_DB: product_db
+          POSTGRES_USER: product_user
+          POSTGRES_PASSWORD: product_pass
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U product_user -d product_db"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    defaults:
+      run:
+        working-directory: product-service
 
     steps:
       # Step 1: Check out the repository code
       - name: Check out repository
         uses: actions/checkout@v4
+
+      # Step 2: Set up JDK 17 (matches java.version in pom.xml)
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+          cache-dependency-path: product-service/pom.xml
+
+      # Step 3: mvnw isn't tracked as executable in git, so make it runnable on Linux
+      - name: Make Maven wrapper executable
+        run: chmod +x mvnw
+
+      # Step 4: Build and run tests with the Maven wrapper
+      - name: Build and test with Maven
+        run: ./mvnw clean verify
