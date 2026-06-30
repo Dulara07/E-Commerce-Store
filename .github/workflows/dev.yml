@@ -1,1 +1,7 @@
+name: Push Automated Changes
+
+on:
+  push:
+    branches:
+      - main # Triggers when you push to main
 
