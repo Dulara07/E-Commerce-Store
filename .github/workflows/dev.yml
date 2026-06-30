@@ -5,3 +5,11 @@ on:
     branches:
       - main # Triggers when you push to main
 
+jobs:
+  commit-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the repository code
+      - name: Check out repository
+        uses: actions/checkout@v4
