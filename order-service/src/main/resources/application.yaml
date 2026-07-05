@@ -30,6 +30,8 @@ product:
   service:
     url: ${PRODUCT_SERVICE_URL:http://localhost:8081}
 
+spring.cloud.compatibility-verifier.enabled: false
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
