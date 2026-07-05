@@ -14,5 +14,27 @@ services:
     volumes:
       - product_data:/var/lib/postgresql/data
 
+  order-db:
+    image: postgres:16
+    container_name: order-db
+    restart: always
+    environment:
+      POSTGRES_DB: order_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"    # matches order-service's default SPRING_DATASOURCE_URL
+    volumes:
+      - order_data:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"    # AMQP port used by Order/Notification Service
+      - "15672:15672"  # Management UI: http://localhost:15672 (guest/guest)
+
 volumes:
   product_data:
+  order_data:
