@@ -1,0 +1,73 @@
+name: Notification Service CI
+
+on:
+  push:
+    branches:
+      - main # Triggers when you push to main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    # Tests are pure Mockito unit tests with no Spring context, so no
+    # RabbitMQ service container is needed here.
+    defaults:
+      run:
+        working-directory: notification-service
+
+    steps:
+      # Step 1: Check out the repository code
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up JDK 21 (matches java.version in pom.xml)
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: notification-service/pom.xml
+
+      # Step 3: mvnw isn't tracked as executable in git, so make it runnable on Linux
+      - name: Make Maven wrapper executable
+        run: chmod +x mvnw
+
+      # Step 4: Build and run tests with the Maven wrapper
+      - name: Build and test with Maven
+        run: ./mvnw clean verify
+
+      # Step 5: Hand the built jar off to the deploy job (only used when this
+      # workflow run goes on to deploy)
+      - name: Upload jar artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: notification-service-jar
+          path: notification-service/target/*.jar
+
+  deploy:
+    needs: build-and-test
+    # Only deploy on a real push to main, not on pull request builds
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+    steps:
+      - name: Download jar artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: notification-service-jar
+          path: notification-service/target
+
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME_NOTIFICATION }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_NOTIFICATION }}
+          package: notification-service/target/*.jar
