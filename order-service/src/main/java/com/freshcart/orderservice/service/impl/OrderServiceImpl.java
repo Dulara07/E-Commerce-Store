@@ -77,4 +77,22 @@ public class OrderServiceImpl implements OrderService {
                 .orderDate(savedOrder.getOrderDate())
                 .build();
     }
+
+    @Override
+    public OrderResponse getOrderById(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order not found with id: " + id));
+
+        return OrderResponse.builder()
+                .orderId(order.getOrderId())
+                .customerId(order.getCustomerId())
+                .productId(order.getProductId())
+                .productName(order.getProductName())
+                .quantity(order.getQuantity())
+                .unitPrice(order.getUnitPrice())
+                .totalPrice(order.getTotalPrice())
+                .status(order.getStatus())
+                .orderDate(order.getOrderDate())
+                .build();
+    }
 }
