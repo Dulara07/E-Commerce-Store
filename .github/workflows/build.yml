@@ -69,4 +69,5 @@ jobs:
         run: |
           ./mvnw -B clean verify sonar:sonar \
             -Dsonar.projectKey=${{ matrix.project-key }} \
+            -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.organization=dulara07
