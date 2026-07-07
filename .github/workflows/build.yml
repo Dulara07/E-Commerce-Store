@@ -11,6 +11,20 @@ jobs:
   build:
     name: Build and analyze
     runs-on: ubuntu-latest
+    services:
+      product-db:
+        image: postgres:16
+        env:
+          POSTGRES_DB: product_db
+          POSTGRES_USER: product_user
+          POSTGRES_PASSWORD: product_pass
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U product_user -d product_db"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     strategy:
       fail-fast: false
