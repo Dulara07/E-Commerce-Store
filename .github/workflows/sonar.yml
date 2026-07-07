@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - master
   pull_request:
     types: [opened, synchronize, reopened]
 
@@ -12,6 +11,22 @@ jobs:
   sonar:
     name: SonarQube Scan
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service-name: product-service
+            working-directory: ./product-service
+            java-version: "17"
+            project-key: Dulara07_E-Commerce-Store-product-service
+          - service-name: order-service
+            working-directory: ./order-service
+            java-version: "21"
+            project-key: Dulara07_E-Commerce-Store-order-service
+          - service-name: notification-service
+            working-directory: ./notification-service
+            java-version: "21"
+            project-key: Dulara07_E-Commerce-Store-notification-service
 
     steps:
       - name: Checkout repository
@@ -19,18 +34,25 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up JDK 17
+      - name: Set up JDK ${{ matrix.java-version }}
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: ${{ matrix.java-version }}
           cache: maven
+          cache-dependency-path: ${{ matrix.working-directory }}/pom.xml
 
-      - name: Build and analyze
+      - name: Make Maven wrapper executable
+        working-directory: ${{ matrix.working-directory }}
+        run: chmod +x mvnw
+
+      - name: SonarQube Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        working-directory: ${{ matrix.working-directory }}
         run: |
-          mvn clean verify sonar:sonar \
-          -Dsonar.projectKey=Dulara07_E-Commerce-Store \git 
+          ./mvnw clean verify sonar:sonar \
+          -Dsonar.projectKey=${{ matrix.project-key }} \
           -Dsonar.organization=dulara07 \
-          -Dsonar.host.url=https://sonarcloud.io
+          -Dsonar.host.url=https://sonarcloud.io \
+          -Dsonar.token=$SONAR_TOKEN
